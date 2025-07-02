@@ -1,14 +1,15 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
-const OpenAI = require('openai');
+const bodyParser = require('body-parser');
+const { OpenAI } = require('openai');
 
 const app = express();
+const port = process.env.PORT || 10000;
+
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public')); // لتشغيل index.html من مجلد public
+app.use(express.static('public'));
 
-// إنشاء كائن OpenAI باستخدام المفتاح البيئي
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -18,19 +19,18 @@ app.post('/ask', async (req, res) => {
   const finalPrompt = `أجب كخبير قانوني يمني معتمد، لا تخرج عن القوانين اليمنية. السؤال: ${question}`;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: finalPrompt }],
+    const chatCompletion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: finalPrompt }],
     });
 
-    res.json({ answer: response.choices[0].message.content });
+    res.json({ answer: chatCompletion.choices[0].message.content });
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error("🔴 GPT Error:", error);  // ← هذا السطر يعرض الخطأ في لوحة Render
     res.status(500).json({ answer: 'حدث خطأ أثناء الاتصال بـ GPT. حاول لاحقًا.' });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
